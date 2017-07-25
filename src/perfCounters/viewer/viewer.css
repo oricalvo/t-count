@@ -1,0 +1,57 @@
+profiler {
+  font-size: 0.85em;
+  position: fixed;
+  box-sizing: border-box;
+  bottom: 1em;
+  right: 1em;
+  display: inline-block;
+  width: 20em;
+  height: 20em;
+  background-color: black;
+  color: white;
+  padding: 1em;
+}
+
+profiler .header {
+  overflow: auto;
+}
+
+profiler ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+profiler li {
+  padding: 0.5em 0;
+  border-bottom: 1px solid white;
+}
+
+profiler li:first-child {
+  border-top: 1px solid white;
+}
+
+profiler li .value {
+  float: right;
+}
+
+profiler .count {
+  display: inline-block;
+  float: right;
+  width: 2em;
+  text-align: center;
+}
+
+profiler .avg {
+  display: inline-block;
+  float: right;
+  width: 3em;
+  text-align: center;
+}
+
+profiler .last-value {
+  display: inline-block;
+  float: right;
+  width: 3em;
+  text-align: center;
+}
