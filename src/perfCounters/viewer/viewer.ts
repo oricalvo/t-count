@@ -40,8 +40,6 @@ export class PerfCounterViewer {
     this.activateAll();
 
     document.addEventListener("keydown", (e) => {
-      console.log("KeyDown", e);
-
       if(e.code == "KeyH" && e.shiftKey && e.ctrlKey) {
         this.element.classList.toggle("active");
       }
