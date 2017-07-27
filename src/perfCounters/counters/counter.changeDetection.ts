@@ -7,8 +7,8 @@ export class PerfCountChangeDetection extends PerfCounter {
     super("Change Detection")
   }
 
-  _onAdded(hub: PerfCounterHub) {
-    super._onAdded(hub);
+  onAddedAsProto(hub: PerfCounterHub) {
+    super.onAddedAsProto(hub);
 
     const applicationRef: ApplicationRef = hub.getData("applicationRef");
     this.profile(applicationRef, "tick");

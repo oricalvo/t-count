@@ -19,7 +19,7 @@ export class AppComponent {
       this.ngZone.runOutsideAngular(() => {
         buttonReset.addEventListener("click", () => {
           setTimeout(() => {
-            this.hub.reset();
+            //this.hub.reset();
           }, 0);
         });
       });
@@ -33,7 +33,7 @@ export class AppComponent {
   noop() {
   }
 
-  xhr() {
+  reload() {
     appStore.dispatch(this.contactThunk.refresh());
   }
 

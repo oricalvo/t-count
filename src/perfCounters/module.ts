@@ -1,5 +1,5 @@
-import {ApplicationRef, Inject, InjectionToken, ModuleWithProviders, NgModule} from '@angular/core';
-import {PerfCounter} from "./counters/counter";
+import {ApplicationRef, Inject, InjectionToken, ModuleWithProviders, NgModule, NgZone} from '@angular/core';
+import {CounterSet, PerfCounter} from "./counters/counter";
 import {PerfCounterHub} from "./hub";
 import {PerfCounterViewer} from "./viewer/viewer";
 
@@ -18,20 +18,24 @@ export class PerfCounterModule {
 
   constructor(private applicationRef: ApplicationRef,
               private hub: PerfCounterHub,
-              @Inject(CONFIG_TOKEN) private config: Config) {
+              @Inject(CONFIG_TOKEN) private config: Config,
+              ngZone: NgZone) {
     this.hub.setData("applicationRef", this.applicationRef);
 
+    const counters = [];
     for(let factory of this.config.counters) {
       const counter = factory();
       if(Array.isArray(counter)) {
         for(let c of counter) {
-          this.hub.addCounter(c);
+          counters.push(c);
         }
       }
       else {
-        this.hub.addCounter(counter);
+        counters.push(counter);
       }
     }
+
+    this.hub.init(counters);
 
     if(this.config.selector) {
       const element = document.querySelector(this.config.selector);
@@ -40,7 +44,10 @@ export class PerfCounterModule {
       }
 
       this.element = element as HTMLElement;
-      this.viewer = new PerfCounterViewer(this.hub, this.element);
+
+      ngZone.runOutsideAngular(()=> {
+        this.viewer = new PerfCounterViewer(this.hub, this.element);
+      });
     }
   }
 

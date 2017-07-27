@@ -5,17 +5,71 @@ export interface PerfCounterOptions {
   noLastValue?: boolean;
 }
 
+export class CounterSet {
+  map: {[name: string]: PerfCounter};
+  arr: PerfCounter[];
+
+  constructor(private name: string, public hub: PerfCounterHub) {
+    this.map = {};
+    this.arr = [];
+  }
+
+  add(counter: PerfCounter) {
+    if(this.map[counter.name]) {
+      throw new Error("Counter: " + counter.name + " already exist");
+    }
+
+    this.map[counter.name] = counter;
+    this.arr.push(counter);
+
+    counter.onAddedToSet(this);
+  }
+
+  find(name: string) {
+    return this.map[name];
+  }
+
+  reset() {
+    for(let counter of this.arr) {
+      counter.reset();
+    }
+  }
+
+  getOrCreate(name: string) {
+    let counter = this.map[name];
+    if(!counter) {
+      counter = this.map[name] = new PerfCounter(name);
+    }
+
+    return counter;
+  }
+
+  get all() {
+    return this.arr;
+  }
+
+  get(name: string) {
+    const counter = this.find(name);
+    if(!counter) {
+      throw new Error("Counter with name: " + name + " was not found");
+    }
+
+    return counter;
+  }
+}
+
 export class PerfCounter {
+  hub: PerfCounterHub;
+  set: CounterSet;
   lastValue: any;
   avg: any;
   sum: any;
   count: number;
-  hub: PerfCounterHub;
   options: PerfCounterOptions;
 
   constructor(public name: string, options?: PerfCounterOptions) {
-    this.count = 0;
     this.options = options || {};
+    this.count = 0;
   }
 
   profile(obj, methodName: string) {
@@ -29,7 +83,9 @@ export class PerfCounter {
 
       const after = performance.now();
 
-      me.update(after-before);
+      const time = after - before;
+
+      me.update(time);
 
       return retVal;
     }
@@ -47,57 +103,110 @@ export class PerfCounter {
     return retVal;
   }
 
-  update(value) {
-    if(!this.options.noLastValue) {
-      this.lastValue = value;
+  private retrieve(): PerfCounter[] {
+    const stats: PerfCounter[] = [this.hub.globalSet.get(this.name)];
+
+    const zoneCounters: CounterSet = Zone.current.get("counterSet");
+    if(zoneCounters) {
+      const counter = zoneCounters.getOrCreate(this.name);
+      stats.push(counter);
     }
 
-    if(!this.options.noAvg) {
-      if (this.sum == undefined) {
-        this.sum = value;
-      }
-      else {
-        this.sum += value;
-      }
-    }
-
-    ++this.count;
-
-    if(!this.options.noAvg) {
-      this.avg = this.sum / this.count;
-    }
-
-    this.onUpdated();
+    return stats;
   }
 
-  private onUpdated() {
-    if(this.hub) {
-      this.hub._onCounterUpdated(this);
+  public clone() {
+    return new PerfCounter(this.name, this.options);
+  }
+
+  private isProto() {
+    return this.set == null;
+  }
+
+  update(value) {
+    if(this.isProto()) {
+      for (let stat of this.retrieve()) {
+        stat.update(value);
+      }
+    }
+    else {
+      if(!this.options.noLastValue) {
+        this.lastValue = value;
+      }
+
+      if(!this.options.noAvg) {
+        if (this.sum == undefined) {
+          this.sum = value;
+        }
+        else {
+          this.sum += value;
+        }
+      }
+
+      ++this.count;
+
+      if(!this.options.noAvg) {
+        this.avg = this.sum / this.count;
+      }
+
+      this.onUpdated();
     }
   }
 
   inc() {
-    this.count++;
+    if (this.isProto()) {
+      for (let stat of this.retrieve()) {
+        stat.inc();
+      }
+    }
+    else {
+      this.count++;
 
-    this.onUpdated();
+      this.onUpdated();
+    }
   }
 
   dec() {
-    this.count--;
+    if (this.isProto()) {
+      for (let stat of this.retrieve()) {
+        stat.dec();
+      }
+    }
+    else {
+      this.count--;
 
-    this.onUpdated();
+      this.onUpdated();
+    }
   }
 
-  _onAdded(hub: PerfCounterHub) {
+  private onUpdated() {
+    if(this.set) {
+      this.set.hub._onCounterUpdated(this);
+    }
+  }
+
+  onAddedAsProto(hub: PerfCounterHub) {
     this.hub = hub;
   }
 
-  reset() {
-    this.count = 0;
-    this.lastValue = undefined;
-    this.avg = undefined;
-    this.sum = undefined;
+  onAddedToSet(set: CounterSet) {
+    this.set = set;
+    this.hub = set.hub;
+  }
 
-    this.onUpdated();
+  reset() {
+    if(this.isProto()) {
+      for (let stat of this.retrieve()) {
+        stat.reset();
+      }
+    }
+    else {
+      this.count = 0;
+      this.lastValue = undefined;
+      this.avg = undefined;
+      this.sum = undefined;
+
+      this.onUpdated();
+    }
   }
 }

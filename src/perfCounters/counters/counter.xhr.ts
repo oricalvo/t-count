@@ -1,6 +1,6 @@
 import {PerfCounter} from "./counter";
 
-let counter = new PerfCounter("XHR", {noAvg: true, noLastValue: true});;
+const counter = new PerfCounter("XHR", {noAvg: true, noLastValue: true});
 
 export function patch() {
   counter.profile(XMLHttpRequest.prototype, "send");
