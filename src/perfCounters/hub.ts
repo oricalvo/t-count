@@ -1,21 +1,31 @@
-import {EventEmitter} from "@angular/core";
-import {CounterSet, PerfCounter} from "./counters/counter";
-import {createScope} from "@angular/core/src/profile/wtf_impl";
+import {EventEmitter, Injectable, NgZone} from "@angular/core";
+import {PerfCounter} from "./counters/counter";
+import {CounterSet} from "./counters/counterSet";
 
+@Injectable()
 export class PerfCounterHub {
-  private counters: PerfCounter[];
-  private global: CounterSet;
-  private last: CounterSet;
-  private data: {};
+  private _protos: PerfCounter[];
+  private _global: CounterSet;
+  private _current: CounterSet;
+  private _activity: Activity;
+  private _data: {};
 
-  //counterAdded: EventEmitter<PerfCounter> = new EventEmitter<PerfCounter>();
   activityStarted: EventEmitter<CounterSet> = new EventEmitter<CounterSet>();
   counterUpdated: EventEmitter<PerfCounter> = new EventEmitter<PerfCounter>();
 
-  constructor() {
-    this.counters = [];
-    this.data = {};
-    this.global = null;
+  constructor(private ngZone: NgZone) {
+    this._protos = [];
+    this._data = {};
+    this._global = null;
+    this._activity = null;
+  }
+
+  get global(): CounterSet {
+    return this._global;
+  }
+
+  get current(): CounterSet {
+    return this._current;
   }
 
   init(counters: PerfCounter[]) {
@@ -23,48 +33,106 @@ export class PerfCounterHub {
       this.add(counter);
     }
 
-    this.global = this.createSet("global");
-    this.last = this.createSet("last");
+    this._global = this.createSet("global");
+    this._current = this.createSet("current");
+
+    this.ngZone.onUnstable.subscribe(() => {
+      this.onVmTurnStarted();
+    });
+
+    this.ngZone.onStable.subscribe(()=> {
+      this.onVmTurnEnded();
+    });
+
+    this.onVmTurnStarted();
+  }
+
+  private onVmTurnStarted() {
+    console.log("onVmTurnStarted");
+
+    let activity: Activity = Zone.current.get("activity");
+    if(activity) {
+      this._activity = activity;
+      return;
+    }
+
+    this._current.reset();
+    this._activity = new Activity(this._current);
+    this._activity.onBegin();
+  }
+
+  private onVmTurnEnded() {
+    if(this._activity) {
+      this._activity.checkEnd();
+      this._activity = null;
+    }
+
+    console.log("onVmTurnEnded");
   }
 
   setData(name: string, value: any) {
-    this.data[name] = value;
+    this._data[name] = value;
   }
 
   getData(name: string): any {
-    return this.data[name];
+    return this._data[name];
   }
 
-  add(counter: PerfCounter) {
-    this.counters.push(counter);
+  private add(counter: PerfCounter) {
+    this._protos.push(counter);
 
     counter.onAddedAsProto(this);
   }
 
-  onActivityStarted() {
-    this.last = this.createSet("last");
-
-    this.activityStarted.emit(this.last);
-
-    return this.last;
-  }
-
-  get globalSet() {
-    if(!this.global) {
-      this.global = this.createSet("global");
+  run(func) {
+    if(Zone.current.get("activity")) {
+      return;
     }
 
-    return this.global;
+    const activity: Activity = this._activity;
+
+    const spec: ZoneSpec = {
+      name: "activity",
+      properties: {
+        activity: activity,
+      },
+      onHasTask: function(delegate: ZoneDelegate, currentZone: Zone, targetZone: Zone, hasTaskState: HasTaskState) {
+        delegate.hasTask(targetZone, hasTaskState);
+
+        if (currentZone === targetZone) {
+          if (hasTaskState.change == 'microTask') {
+            activity.hasPendingMicrotasks = hasTaskState.microTask;
+          }
+          else if (hasTaskState.change == 'macroTask') {
+            activity.hasPendingMacrotasks = hasTaskState.macroTask;
+          }
+
+          //activity.checkEnd();
+        }
+      }
+    };
+
+    const zone = Zone.current.fork(spec);
+
+    return zone.run(func);
   }
 
-  get lastSet() {
-    return this.last;
-  }
+  // get globalSet() {
+  //   if(!this.global) {
+  //     this.global = this.createSet("global");
+  //   }
+  //
+  //   return this.global;
+  // }
+  //
+  // get lastSet() {
+  //   return this.current;
+  // }
 
   private createSet(name: string) {
     const set = new CounterSet(name, this);
 
-    for(let counter of this.counters) {
+    for(let counter of this._protos) {
       set.add(counter.clone());
     }
 
@@ -73,5 +141,65 @@ export class PerfCounterHub {
 
   _onCounterUpdated(counter: PerfCounter) {
     this.counterUpdated.emit(counter);
+  }
+
+  private retrieve(): CounterSet[] {
+    const sets: CounterSet[] = [this._global];
+
+    if(this._activity) {
+      sets.push(this._current);
+    }
+
+    return sets;
+  }
+
+  updateCounter(proto: PerfCounter, value: any) {
+    for(let set of this.retrieve()) {
+      set.updateCounter(proto, value);
+    }
+  }
+
+  incCounter(proto: PerfCounter) {
+    for(let set of this.retrieve()) {
+      set.incCounter(proto);
+    }
+  }
+
+  decCounter(proto: PerfCounter) {
+    for(let set of this.retrieve()) {
+      set.decCounter(proto);
+    }
+  }
+
+  resetCounter(proto: PerfCounter) {
+    for(let set of this.retrieve()) {
+      set.resetCounter(proto);
+    }
+  }
+}
+
+class Activity {
+  counters: CounterSet;
+  hasPendingMicrotasks: boolean;
+  hasPendingMacrotasks: boolean;
+
+  constructor(counters: CounterSet) {
+    this.counters = counters;
+    this.hasPendingMacrotasks = false;
+    this.hasPendingMicrotasks = false;
+  }
+
+  checkEnd() {
+    if(!this.hasPendingMicrotasks && !this.hasPendingMacrotasks) {
+      this.onEnd();
+    }
+  }
+
+  onBegin() {
+    console.log("Activity BEGIN");
+  }
+
+  onEnd() {
+    console.log("Activity END");
   }
 }

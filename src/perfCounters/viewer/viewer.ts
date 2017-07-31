@@ -1,7 +1,8 @@
 import {PerfCounterHub} from "../hub";
-import {CounterSet, PerfCounter} from "../counters/counter";
+import {PerfCounter} from "../counters/counter";
 import template from "./viewer.html";
 import {Logger} from "complog";
+import {CounterSet} from "../counters/counterSet";
 
 const logger = Logger.create("PerfCounterViewer");
 
@@ -47,13 +48,13 @@ export class PerfCounterViewer {
   }
 
   private activateAll() {
-    this.render(this.hub.globalSet);
+    this.render(this.hub.global);
     this.activeSetIsLast = false;
     this.switchButton(this.buttonAll);
   }
 
   private activateLast() {
-    this.render(this.hub.lastSet);
+    this.render(this.hub.current);
     this.activeSetIsLast = true;
     this.switchButton(this.buttonLast);
   }

@@ -1,62 +1,34 @@
-import {CounterSet, PerfCounter} from "./counter";
+import {PerfCounter} from "./counter";
 import * as xhr from "./counter.xhr";
+import {CounterSet} from "./counterSet";
 
 export const counterThunk = new PerfCounter("Thunk");
 export const counterAction = new PerfCounter("Reducer");
 
 export const perfCounterMiddleware = store => next => action => {
-  let retVal;
-  let before;
 
-  let perfCounters = Zone.current.get("counterSet");
-  if (!perfCounters) {
-    const counterSet: CounterSet = counterThunk.hub.onActivityStarted();
+  function exec() {
+    const before = performance.now();
 
-    const spec: ZoneSpec = {
-      name: "redux-counters",
-      properties: {
-        "counterSet": counterSet,
-      },
-    };
+    const retVal = next(action);
 
-    const zone = Zone.current.fork(spec);
+    const after = performance.now();
+    counterAction.update(after-before);
 
-    retVal = zone.run(function () {
-      before = performance.now();
-      const retVal = next(action);
-
-      if(typeof action == "function" && retVal && retVal.then) {
-        retVal.then(function() {
-          const after = performance.now();
-          counterThunk.update(after-before);
-        }, function() {
-          const after = performance.now();
-          counterThunk.update(after-before);
-        });
-      }
-
-      return retVal;
-    });
-  }
-  else {
-    before = performance.now();
-    retVal = next(action);
-
-    if(typeof action == "function" && retVal && retVal.then) {
-      retVal.then(function() {
+    if (typeof action == "function" && retVal && retVal.then) {
+      retVal.then(function () {
         const after = performance.now();
-        counterThunk.update(after-before);
-      }, function() {
+        counterThunk.update(after - before);
+      }, function () {
         const after = performance.now();
-        counterThunk.update(after-before);
+        counterThunk.update(after - before);
       });
     }
+
+    return retVal;
   }
 
-  const after = performance.now();
-  counterAction.update(after-before);
-
-  return retVal;
+  return counterThunk.hub.run(exec);
 }
 
 export function create() {

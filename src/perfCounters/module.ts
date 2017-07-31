@@ -1,5 +1,5 @@
 import {ApplicationRef, Inject, InjectionToken, ModuleWithProviders, NgModule, NgZone} from '@angular/core';
-import {CounterSet, PerfCounter} from "./counters/counter";
+import {PerfCounter} from "./counters/counter";
 import {PerfCounterHub} from "./hub";
 import {PerfCounterViewer} from "./viewer/viewer";
 
