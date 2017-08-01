@@ -1,17 +1,17 @@
 import {EventEmitter, Injectable, NgZone} from "@angular/core";
-import {PerfCounter} from "./counters/counter";
-import {CounterSet} from "./counters/counterSet";
+import {Counter} from "./counter";
+import {CounterSet} from "./counterSet";
 
 @Injectable()
-export class PerfCounterHub {
-  private _protos: PerfCounter[];
+export class Profiler {
+  private _protos: Counter[];
   private _global: CounterSet;
   private _current: CounterSet;
   private _activity: Activity;
   private _data: {};
 
   activityStarted: EventEmitter<CounterSet> = new EventEmitter<CounterSet>();
-  counterUpdated: EventEmitter<PerfCounter> = new EventEmitter<PerfCounter>();
+  counterUpdated: EventEmitter<Counter> = new EventEmitter<Counter>();
 
   constructor(private ngZone: NgZone) {
     this._protos = [];
@@ -28,7 +28,7 @@ export class PerfCounterHub {
     return this._current;
   }
 
-  init(counters: PerfCounter[]) {
+  init(counters: Counter[]) {
     for(let counter of counters) {
       this.add(counter);
     }
@@ -78,7 +78,7 @@ export class PerfCounterHub {
     return this._data[name];
   }
 
-  private add(counter: PerfCounter) {
+  private add(counter: Counter) {
     this._protos.push(counter);
 
     counter.onAddedAsProto(this);
@@ -86,7 +86,7 @@ export class PerfCounterHub {
 
   run(func) {
     if(Zone.current.get("activity")) {
-      return;
+      return func();
     }
 
     const activity: Activity = this._activity;
@@ -139,7 +139,7 @@ export class PerfCounterHub {
     return set;
   }
 
-  _onCounterUpdated(counter: PerfCounter) {
+  _onCounterUpdated(counter: Counter) {
     this.counterUpdated.emit(counter);
   }
 
@@ -153,25 +153,25 @@ export class PerfCounterHub {
     return sets;
   }
 
-  updateCounter(proto: PerfCounter, value: any) {
+  updateCounter(proto: Counter, value: any, inc: boolean) {
     for(let set of this.retrieve()) {
-      set.updateCounter(proto, value);
+      set.updateCounter(proto, value, inc);
     }
   }
 
-  incCounter(proto: PerfCounter) {
+  incCounter(proto: Counter) {
     for(let set of this.retrieve()) {
       set.incCounter(proto);
     }
   }
 
-  decCounter(proto: PerfCounter) {
+  decCounter(proto: Counter) {
     for(let set of this.retrieve()) {
       set.decCounter(proto);
     }
   }
 
-  resetCounter(proto: PerfCounter) {
+  resetCounter(proto: Counter) {
     for(let set of this.retrieve()) {
       set.resetCounter(proto);
     }

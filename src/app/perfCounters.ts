@@ -1,7 +1,7 @@
-import * as components from "../perfCounters/counters/counter.components";
-import * as xhr from "../perfCounters/counters/counter.xhr";
-import * as changeDetection from "../perfCounters/counters/counter.changeDetection";
-import * as redux from "../perfCounters/counters/counter.redux";
+import * as components from "../profiler/counters/counter.components";
+import * as xhr from "../profiler/counters/counter.xhr";
+import * as changeDetection from "../profiler/counters/counter.changeDetection";
+import * as redux from "../profiler/counters/counter.redux";
 
 components.patch();
 xhr.patch();

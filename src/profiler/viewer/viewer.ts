@@ -1,8 +1,8 @@
-import {PerfCounterHub} from "../hub";
-import {PerfCounter} from "../counters/counter";
+import {Counter} from "../core/counter";
 import template from "./viewer.html";
 import {Logger} from "complog";
-import {CounterSet} from "../counters/counterSet";
+import {CounterSet} from "../core/counterSet";
+import {Profiler} from "../core/profiler";
 
 const logger = Logger.create("PerfCounterViewer");
 
@@ -15,7 +15,7 @@ export class PerfCounterViewer {
   buttonAll: HTMLButtonElement;
   buttonLast: HTMLButtonElement;
 
-  constructor(private hub: PerfCounterHub, private element: HTMLElement) {
+  constructor(private profiler: Profiler, private element: HTMLElement) {
     element.innerHTML = template;
 
     this.counterTemplate = element.querySelector("li");
@@ -23,8 +23,8 @@ export class PerfCounterViewer {
 
     this.ul = this.element.querySelector("ul");
 
-    hub.counterUpdated.subscribe(this.onCounterUpdated.bind(this));
-    hub.activityStarted.subscribe(this.onActivityStarted.bind(this));
+    profiler.counterUpdated.subscribe(this.onCounterUpdated.bind(this));
+    profiler.activityStarted.subscribe(this.onActivityStarted.bind(this));
 
     this.buttonAll = <HTMLButtonElement>this.element.querySelector(".toolbar button.all");
     this.buttonAll.addEventListener("click", this.activateAll.bind(this));
@@ -48,13 +48,13 @@ export class PerfCounterViewer {
   }
 
   private activateAll() {
-    this.render(this.hub.global);
+    this.render(this.profiler.global);
     this.activeSetIsLast = false;
     this.switchButton(this.buttonAll);
   }
 
   private activateLast() {
-    this.render(this.hub.current);
+    this.render(this.profiler.current);
     this.activeSetIsLast = true;
     this.switchButton(this.buttonLast);
   }
@@ -79,14 +79,14 @@ export class PerfCounterViewer {
     }
   }
 
-  private addCounter(counter: PerfCounter) {
+  private addCounter(counter: Counter) {
     const li: HTMLElement = this.counterTemplate.cloneNode(true) as HTMLElement;
     this.renderCounter(li, counter, true);
     counter["view"] = li;
     this.ul.appendChild(li);
   }
 
-  private renderCounter(li: HTMLElement, counter: PerfCounter, firstTime: boolean) {
+  private renderCounter(li: HTMLElement, counter: Counter, firstTime: boolean) {
     if(firstTime) {
       const name: HTMLElement = li.querySelector(".name") as HTMLElement;
       name.innerText = counter.name;
@@ -115,10 +115,18 @@ export class PerfCounterViewer {
   }
 
   private round(num: number) {
+    if(num > 100) {
+      return Math.round(num);
+    }
+
+    if(num > 10) {
+      return Math.round(num * 10) / 10;
+    }
+
     return Math.round(num * 100) / 100;
   }
 
-  private onCounterAdded(counter: PerfCounter) {
+  private onCounterAdded(counter: Counter) {
     if(counter.set != this.activeSet) {
       return;
     }
@@ -126,7 +134,7 @@ export class PerfCounterViewer {
     this.addCounter(counter);
   }
 
-  private onCounterUpdated(counter: PerfCounter) {
+  private onCounterUpdated(counter: Counter) {
     const li = counter["view"];
     if(!li) {
       this.onCounterAdded(counter);

@@ -1,21 +1,21 @@
-import {PerfCounterHub} from "../hub";
+import {Profiler} from "./profiler";
 import {CounterSet} from "./counterSet";
 
-export interface PerfCounterOptions {
+export interface CounterOptions {
   noAvg?: boolean;
   noLastValue?: boolean;
 }
 
-export class PerfCounter {
-  hub: PerfCounterHub;
+export class Counter {
+  profiler: Profiler;
   set: CounterSet;
   lastValue: any;
   avg: any;
   sum: any;
   count: number;
-  options: PerfCounterOptions;
+  options: CounterOptions;
 
-  constructor(public name: string, options?: PerfCounterOptions) {
+  constructor(public name: string, options?: CounterOptions) {
     this.options = options || {};
     this.count = 0;
   }
@@ -52,16 +52,16 @@ export class PerfCounter {
   }
 
   public clone() {
-    return new PerfCounter(this.name, this.options);
+    return new Counter(this.name, this.options);
   }
 
   private isProto() {
     return this.set == null;
   }
 
-  update(value) {
+  update(value, inc: boolean = true) {
     if(this.isProto()) {
-      this.hub.updateCounter(this, value);
+      this.profiler.updateCounter(this, value, inc);
       return;
     }
 
@@ -78,7 +78,9 @@ export class PerfCounter {
       }
     }
 
-    ++this.count;
+    if(inc) {
+      ++this.count;
+    }
 
     if(!this.options.noAvg) {
       this.avg = this.sum / this.count;
@@ -89,7 +91,7 @@ export class PerfCounter {
 
   inc() {
     if (this.isProto()) {
-      this.hub.incCounter(this);
+      this.profiler.incCounter(this);
       return;
     }
 
@@ -100,7 +102,7 @@ export class PerfCounter {
 
   dec() {
     if (this.isProto()) {
-      this.hub.decCounter(this);
+      this.profiler.decCounter(this);
       return;
     }
 
@@ -111,22 +113,22 @@ export class PerfCounter {
 
   private onUpdated() {
     if(this.set) {
-      this.set.hub._onCounterUpdated(this);
+      this.set.profiler._onCounterUpdated(this);
     }
   }
 
-  onAddedAsProto(hub: PerfCounterHub) {
-    this.hub = hub;
+  onAddedAsProto(profiler: Profiler) {
+    this.profiler = profiler;
   }
 
   onAddedToSet(set: CounterSet) {
     this.set = set;
-    this.hub = set.hub;
+    this.profiler = set.profiler;
   }
 
   reset() {
     if(this.isProto()) {
-      this.hub.resetCounter(this);
+      this.profiler.resetCounter(this);
       return;
     }
 

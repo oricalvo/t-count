@@ -1,7 +1,7 @@
 import * as core from '@angular/core';
-import {PerfCounter} from "./counter";
+import {Counter} from "../core/counter";
 
-const counter: PerfCounter = new PerfCounter("Components", {noAvg: true, noLastValue: true});
+const counter: Counter = new Counter("Components", {noAvg: true, noLastValue: true});
 
 export function patch() {
   const originalComponent = core.Component;

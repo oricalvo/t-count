@@ -10,6 +10,8 @@ profiler {
   height: 20em;
   background-color: black;
   color: white;
+  border: 1px solid rgb(200, 200, 200);
+  font-family: Consolas;
 }
 
 profiler.active {
@@ -22,6 +24,7 @@ profiler .content {
 
 profiler .header {
   overflow: auto;
+  padding: 0.5em 0.25em;
 }
 
 profiler ul {
@@ -31,7 +34,7 @@ profiler ul {
 }
 
 profiler li {
-  padding: 0.5em 0;
+  padding: 0.35em 0;
   border-bottom: 1px solid white;
 }
 
@@ -46,30 +49,21 @@ profiler li .value {
 profiler .stat {
   display: inline-block;
   float: right;
-  width: 2em;
+  width: 3em;
   text-align: center;
 }
 
+profiler .stat.count {
+  width: 2em;
+}
+
 profiler .count {
-}
-
-profiler .avg {
-  width: 3em;
-}
-
-profiler .last-value {
-  width: 3em;
-}
-
-profiler .sum {
-  width: 3em;
 }
 
 profiler .toolbar {
   padding: 0;
   display: flex;
   flex-direction: row;
-  margin-bottom: 1em;
   flex-shrink: 0;
 }
 

@@ -1,9 +1,9 @@
-import {PerfCounter} from "./counter";
+import {Counter} from "../core/counter";
 import * as xhr from "./counter.xhr";
-import {CounterSet} from "./counterSet";
+import {CounterSet} from "../core/counterSet";
 
-export const counterThunk = new PerfCounter("Thunk");
-export const counterAction = new PerfCounter("Reducer");
+export const counterThunk = new Counter("Thunk");
+export const counterAction = new Counter("Reducer");
 
 export const perfCounterMiddleware = store => next => action => {
 
@@ -28,7 +28,7 @@ export const perfCounterMiddleware = store => next => action => {
     return retVal;
   }
 
-  return counterThunk.hub.run(exec);
+  return counterThunk.profiler.run(exec);
 }
 
 export function create() {

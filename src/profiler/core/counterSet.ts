@@ -1,16 +1,16 @@
-import {PerfCounterHub} from "../hub";
-import {PerfCounter} from "./counter";
+import {Counter} from "./counter";
+import {Profiler} from "./profiler";
 
 export class CounterSet {
-  map: {[name: string]: PerfCounter};
-  arr: PerfCounter[];
+  map: {[name: string]: Counter};
+  arr: Counter[];
 
-  constructor(private name: string, public hub: PerfCounterHub) {
+  constructor(private name: string, public profiler: Profiler) {
     this.map = {};
     this.arr = [];
   }
 
-  add(counter: PerfCounter) {
+  add(counter: Counter) {
     if(this.map[counter.name]) {
       throw new Error("Counter: " + counter.name + " already exist");
     }
@@ -34,7 +34,7 @@ export class CounterSet {
   getOrCreate(name: string) {
     let counter = this.map[name];
     if(!counter) {
-      counter = this.map[name] = new PerfCounter(name);
+      counter = this.map[name] = new Counter(name);
     }
 
     return counter;
@@ -53,22 +53,22 @@ export class CounterSet {
     return counter;
   }
 
-  updateCounter(proto: PerfCounter, value: any) {
+  updateCounter(proto: Counter, value: any, inc: boolean) {
     const counter = this.get(proto.name);
-    counter.update(value);
+    counter.update(value, inc);
   }
 
-  incCounter(proto: PerfCounter) {
+  incCounter(proto: Counter) {
     const counter = this.get(proto.name);
     counter.inc();
   }
 
-  decCounter(proto: PerfCounter) {
+  decCounter(proto: Counter) {
     const counter = this.get(proto.name);
     counter.dec();
   }
 
-  resetCounter(proto: PerfCounter) {
+  resetCounter(proto: Counter) {
     const counter = this.get(proto.name);
     counter.reset();
   }

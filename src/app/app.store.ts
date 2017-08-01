@@ -5,8 +5,7 @@ import thunk from 'redux-thunk';
 import {Http} from "@angular/http";
 import {Injectable} from "@angular/core";
 import "rxjs/add/operator/toPromise";
-import {PerfCounter} from "../perfCounters/counters/counter";
-import {counterAction, counterThunk, perfCounterMiddleware} from "../perfCounters/counters/counter.redux";
+import {perfCounterMiddleware} from "../profiler/counters/counter.redux";
 
 function reducer(state: AppState, action) {
   if(state == undefined) {
@@ -48,6 +47,8 @@ export class ContactThunk {
     return async (dispatch, getState) => {
       const res = await this.http.get("/assets/contacts.json").toPromise();
       const contacts = res.json();
+
+      console.log("contacts are", contacts);
 
       dispatch({
         type: "SET_CONTACTS",

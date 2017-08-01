@@ -1,6 +1,6 @@
 import {Component, ElementRef, NgZone} from '@angular/core';
 import {appStore, ContactThunk} from "./app.store";
-import {PerfCounterHub} from "../perfCounters/hub";
+import {Profiler} from "../profiler/core/profiler";
 
 @Component({
   selector: 'app-root',
@@ -10,7 +10,7 @@ import {PerfCounterHub} from "../perfCounters/hub";
 export class AppComponent {
   showClock: boolean = true;
 
-  constructor(private contactThunk: ContactThunk, private hub: PerfCounterHub, private ngZone: NgZone, private element: ElementRef) {
+  constructor(private contactThunk: ContactThunk, private profiler: Profiler, private ngZone: NgZone, private element: ElementRef) {
   }
 
   ngOnInit() {
@@ -19,7 +19,6 @@ export class AppComponent {
       this.ngZone.runOutsideAngular(() => {
         buttonReset.addEventListener("click", () => {
           setTimeout(() => {
-            //this.hub.reset();
           }, 0);
         });
       });
@@ -27,6 +26,7 @@ export class AppComponent {
   }
 
   get contacts() {
+    console.log(appStore.getState().contacts);
     return appStore.getState().contacts;
   }
 
