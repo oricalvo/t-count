@@ -2,46 +2,52 @@ import {Counter} from "./counter";
 import {Profiler} from "./profiler";
 
 export class CounterSet {
-  map: {[name: string]: Counter};
-  arr: Counter[];
+  _name: string;
+  _map: {[name: string]: Counter};
+  _arr: Counter[];
 
-  constructor(private name: string, public profiler: Profiler) {
-    this.map = {};
-    this.arr = [];
+  constructor(name: string, public profiler: Profiler) {
+    this._name = name;
+    this._map = {};
+    this._arr = [];
+  }
+
+  get name() {
+    return this._name;
   }
 
   add(counter: Counter) {
-    if(this.map[counter.name]) {
+    if(this._map[counter.name]) {
       throw new Error("Counter: " + counter.name + " already exist");
     }
 
-    this.map[counter.name] = counter;
-    this.arr.push(counter);
+    this._map[counter.name] = counter;
+    this._arr.push(counter);
 
     counter.onAddedToSet(this);
   }
 
   find(name: string) {
-    return this.map[name];
+    return this._map[name];
   }
 
   reset() {
-    for(let counter of this.arr) {
+    for(let counter of this._arr) {
       counter.reset();
     }
   }
 
   getOrCreate(name: string) {
-    let counter = this.map[name];
+    let counter = this._map[name];
     if(!counter) {
-      counter = this.map[name] = new Counter(name);
+      counter = this._map[name] = new Counter(name);
     }
 
     return counter;
   }
 
   get all() {
-    return this.arr;
+    return this._arr;
   }
 
   get(name: string) {

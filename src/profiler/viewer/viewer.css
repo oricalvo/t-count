@@ -1,7 +1,7 @@
 profiler {
   display: none;
   flex-direction: column;
-  font-size: 0.85em;
+  font-size: 0.75em;
   position: fixed;
   box-sizing: border-box;
   bottom: 1em;
@@ -72,6 +72,7 @@ profiler button {
   padding: 0.35em;
   border: 0;
   outline: none;
+  font-size: inherit;
 }
 
 profiler .toolbar button {

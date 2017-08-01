@@ -56,4 +56,18 @@ export class ContactThunk {
       });
     }
   }
+
+  wait() {
+    return async (dispatch, getState) => {
+      return delay(1000);
+    }
+  }
+}
+
+function delay(wait, data?) {
+  return new Promise(function(resolve, reject) {
+    setTimeout(()=> {
+      resolve(data);
+    }, wait);
+  });
 }

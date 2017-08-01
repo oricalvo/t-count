@@ -14,11 +14,7 @@ export function patch() {
 
       counter.update(after-before);
 
-      console.log("xxx");
-
       xhr.removeEventListener("load", onload);
-
-
     }
 
     xhr.addEventListener("load", onload);

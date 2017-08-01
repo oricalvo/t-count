@@ -1,8 +1,8 @@
-import {Counter} from "../core/counter";
 import template from "./viewer.html";
 import {Logger} from "complog";
 import {CounterSet} from "../core/counterSet";
 import {Profiler} from "../core/profiler";
+import {Counter} from "../core/counter";
 
 const logger = Logger.create("PerfCounterViewer");
 
@@ -11,9 +11,10 @@ export class PerfCounterViewer {
   counterTemplate: HTMLElement;
   activeButton: Element;
   activeSet: CounterSet;
-  activeSetIsLast: boolean;
   buttonAll: HTMLButtonElement;
   buttonLast: HTMLButtonElement;
+  buttons: HTMLElement[];
+  visible: boolean;
 
   constructor(private profiler: Profiler, private element: HTMLElement) {
     element.innerHTML = template;
@@ -26,37 +27,58 @@ export class PerfCounterViewer {
     profiler.counterUpdated.subscribe(this.onCounterUpdated.bind(this));
     profiler.activityStarted.subscribe(this.onActivityStarted.bind(this));
 
-    this.buttonAll = <HTMLButtonElement>this.element.querySelector(".toolbar button.all");
-    this.buttonAll.addEventListener("click", this.activateAll.bind(this));
-
-    this.buttonLast = <HTMLButtonElement>this.element.querySelector(".toolbar button.last");
-    this.buttonLast.addEventListener("click", this.activateLast.bind(this));
-
-    const buttonReset = <HTMLButtonElement>this.element.querySelector(".footer button.reset");
-    buttonReset.addEventListener("click", this.reset.bind(this));
-
-    this.activeSet = null;
-    this.activeSetIsLast = false;
-
-    this.activateAll();
-
-    document.addEventListener("keydown", (e) => {
-      if(e.code == "KeyH" && e.shiftKey && e.ctrlKey) {
-        this.element.classList.toggle("active");
-      }
-    });
+    this.initToolbar();
+    this.initFooter();
+    this.initShortcut();
+    this.initSettingsFromLocalStorage();
   }
 
-  private activateAll() {
-    this.render(this.profiler.global);
-    this.activeSetIsLast = false;
-    this.switchButton(this.buttonAll);
+  private initToolbar() {
+    const toolbar = this.element.querySelector(".toolbar");
+    if(!toolbar) {
+      throw new Error("Toolbar was not found");
+    }
+
+    this.buttons = [];
+    for(let set of this.profiler.sets) {
+      const button = document.createElement("button");
+      button.innerText = this.pascalCase(set.name);
+      button.classList.add(set.name);
+      button.addEventListener("click", this.activateSet.bind(this, set));
+      button["counterSet"] = set;
+      this.buttons.push(button);
+
+      toolbar.appendChild(button);
+    }
   }
 
-  private activateLast() {
-    this.render(this.profiler.current);
-    this.activeSetIsLast = true;
-    this.switchButton(this.buttonLast);
+  private toggleVisibility() {
+    this.visible = !this.visible;
+
+    this.updateVisibility();
+
+    localStorage.setItem("angularProfiler.visible", this.visible + "");
+  }
+
+  private updateVisibility() {
+    if(this.visible) {
+      this.element.classList.add("active");
+    }
+    else {
+      this.element.classList.remove("active");
+    }
+  }
+
+  private activateSet(counterSet: CounterSet) {
+    this.activeSet = counterSet;
+    this.render();
+
+    const button = this.buttons.find(b=>b["counterSet"]==this.activeSet);
+    if(button) {
+      this.switchButton(button);
+    }
+
+    localStorage.setItem("angularProfiler.activeSet", this.activeSet.name);
   }
 
   private switchButton(button) {
@@ -68,14 +90,15 @@ export class PerfCounterViewer {
     this.activeButton.classList.add("active");
   }
 
-  private render(activeSet: CounterSet) {
+  private render() {
     this.ul.innerHTML = "";
-    this.activeSet = activeSet;
 
-    if(activeSet) {
-      for (let counter of activeSet.all) {
-        this.addCounter(counter);
-      }
+    if(!this.activeSet) {
+      return;
+    }
+
+    for (let counter of this.activeSet.all) {
+      this.addCounter(counter);
     }
   }
 
@@ -114,6 +137,12 @@ export class PerfCounterViewer {
     }
   }
 
+  private pascalCase(str) {
+    const ch = str[0].toUpperCase();
+
+    return ch + str.substring(1);
+  }
+
   private round(num: number) {
     if(num > 100) {
       return Math.round(num);
@@ -145,8 +174,8 @@ export class PerfCounterViewer {
   }
 
   private onActivityStarted(counterSet: CounterSet) {
-    if(this.activeSetIsLast) {
-      this.render(counterSet);
+    if(this.activeSet.name == "last") {
+      this.render();
     }
   }
 
@@ -154,6 +183,35 @@ export class PerfCounterViewer {
     if(this.activeSet) {
       this.activeSet.reset();
     }
+  }
+
+  private initFooter() {
+    const buttonReset = <HTMLButtonElement>this.element.querySelector(".footer button.reset");
+    buttonReset.addEventListener("click", this.reset.bind(this));
+  }
+
+  private initShortcut() {
+    document.addEventListener("keydown", (e) => {
+      if(e.code == "KeyH" && e.shiftKey && e.ctrlKey) {
+        this.toggleVisibility();
+      }
+    });
+  }
+
+  private initSettingsFromLocalStorage() {
+    this.visible = localStorage.getItem("angularProfiler.visible") == "true";
+    this.updateVisibility();
+
+    const activeSetName = localStorage.getItem("angularProfiler.activeSet");
+    let activeSet = null;
+    if(activeSetName) {
+      activeSet = this.profiler.findActiveSetByName(activeSetName);
+    }
+    if(!activeSet) {
+      activeSet = this.profiler.all;
+    }
+
+    this.activateSet(activeSet);
   }
 }
 

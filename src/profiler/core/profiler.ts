@@ -5,10 +5,11 @@ import {CounterSet} from "./counterSet";
 @Injectable()
 export class Profiler {
   private _protos: Counter[];
-  private _global: CounterSet;
-  private _current: CounterSet;
-  private _activity: Activity;
+  private _counterSetAll: CounterSet;
+  private _counterSetLast: CounterSet;
+  private _vmTurnActivity: Activity;
   private _data: {};
+  private _sets: CounterSet[];
 
   activityStarted: EventEmitter<CounterSet> = new EventEmitter<CounterSet>();
   counterUpdated: EventEmitter<Counter> = new EventEmitter<Counter>();
@@ -16,16 +17,20 @@ export class Profiler {
   constructor(private ngZone: NgZone) {
     this._protos = [];
     this._data = {};
-    this._global = null;
-    this._activity = null;
+    this._counterSetAll = null;
+    this._vmTurnActivity = null;
   }
 
-  get global(): CounterSet {
-    return this._global;
+  get sets(): CounterSet[] {
+    return this._sets;
   }
 
-  get current(): CounterSet {
-    return this._current;
+  get all(): CounterSet {
+    return this._counterSetAll;
+  }
+
+  get last(): CounterSet {
+    return this._counterSetLast;
   }
 
   init(counters: Counter[]) {
@@ -33,8 +38,9 @@ export class Profiler {
       this.add(counter);
     }
 
-    this._global = this.createSet("global");
-    this._current = this.createSet("current");
+    this._counterSetAll = this.createSet("all");
+    this._counterSetLast = this.createSet("last");
+    this._sets = [this._counterSetAll, this._counterSetLast];
 
     this.ngZone.onUnstable.subscribe(() => {
       this.onVmTurnStarted();
@@ -48,26 +54,22 @@ export class Profiler {
   }
 
   private onVmTurnStarted() {
-    console.log("onVmTurnStarted");
-
     let activity: Activity = Zone.current.get("activity");
     if(activity) {
-      this._activity = activity;
+      this._vmTurnActivity = activity;
       return;
     }
 
-    this._current.reset();
-    this._activity = new Activity(this._current);
-    this._activity.onBegin();
+    this._counterSetLast.reset();
+    this._vmTurnActivity = new Activity(this._counterSetLast);
+    this._vmTurnActivity.onBegin();
   }
 
   private onVmTurnEnded() {
-    if(this._activity) {
-      this._activity.checkEnd();
-      this._activity = null;
+    if(this._vmTurnActivity) {
+      this._vmTurnActivity.checkEnd();
+      this._vmTurnActivity = null;
     }
-
-    console.log("onVmTurnEnded");
   }
 
   setData(name: string, value: any) {
@@ -89,7 +91,7 @@ export class Profiler {
       return func();
     }
 
-    const activity: Activity = this._activity;
+    const activity: Activity = this._vmTurnActivity;
 
     const spec: ZoneSpec = {
       name: "activity",
@@ -144,10 +146,10 @@ export class Profiler {
   }
 
   private retrieve(): CounterSet[] {
-    const sets: CounterSet[] = [this._global];
+    const sets: CounterSet[] = [this._counterSetAll];
 
-    if(this._activity) {
-      sets.push(this._current);
+    if(this._vmTurnActivity) {
+      sets.push(this._counterSetLast);
     }
 
     return sets;
@@ -176,6 +178,16 @@ export class Profiler {
       set.resetCounter(proto);
     }
   }
+
+  findActiveSetByName(name: string) {
+    for(let counterSet of this._sets) {
+      if(counterSet.name == name) {
+        return counterSet;
+      }
+    }
+
+    return null;
+  }
 }
 
 class Activity {
@@ -196,10 +208,8 @@ class Activity {
   }
 
   onBegin() {
-    console.log("Activity BEGIN");
   }
 
   onEnd() {
-    console.log("Activity END");
   }
 }

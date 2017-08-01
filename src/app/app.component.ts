@@ -26,7 +26,6 @@ export class AppComponent {
   }
 
   get contacts() {
-    console.log(appStore.getState().contacts);
     return appStore.getState().contacts;
   }
 
@@ -43,5 +42,9 @@ export class AppComponent {
 
   loadContacts() {
     appStore.dispatch(this.contactThunk.loadAll());
+  }
+
+  setTimeout() {
+    appStore.dispatch(this.contactThunk.wait());
   }
 }
