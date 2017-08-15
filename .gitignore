@@ -1,0 +1,10 @@
+/.idea
+/node_modules
+/build_tmp
+/package
+build/**/*.js
+build/**/*.js.map
+src/**/*.js
+src/**/*.js.map
+tsconfig.tmp.json
+

@@ -1,0 +1,30 @@
+{
+  "name": "t-count",
+  "version": "1.0.5",
+  "description": "",
+  "main": "moovit-profiler.umd.js",
+  "module": "moovit-profiler.es5.js",
+  "typings": "index.d.ts",
+  "scripts": {
+    "pack": "bu pack",
+    "patch": "bu patchError"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "complog": "^1.0.9",
+    "tslib": "^1.7.0",
+    "zone.js": "^0.8.10"
+  },
+  "devDependencies": {
+    "@types/node": "^8.0.22",
+    "build-utils": "^1.0.44",
+    "colors": "^1.1.2",
+    "rollup": "^0.47.4",
+    "rollup-plugin-postcss": "^0.5.4",
+    "rollup-plugin-sass": "^0.5.3",
+    "rollup-plugin-string": "^2.0.2",
+    "typescript": "^2.3.4"
+  },
+  "peerDependencies": {}
+}
