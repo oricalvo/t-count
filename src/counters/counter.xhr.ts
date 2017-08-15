@@ -1,6 +1,6 @@
 import {Counter} from "../core/counter";
 
-export class XHRCounter extends Counter {
+export class CounterXHR extends Counter {
     constructor() {
         super("XHR")
     }

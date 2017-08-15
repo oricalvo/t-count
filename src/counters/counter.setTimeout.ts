@@ -1,6 +1,6 @@
 import {Counter} from "../core/counter";
 
-export class SetTimeoutCounter extends Counter {
+export class CounterSetTimeout extends Counter {
   constructor() {
     super("setTimeout");
   }

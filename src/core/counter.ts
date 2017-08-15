@@ -7,17 +7,19 @@ export interface CounterOptions {
 }
 
 export class Counter {
-    profiler: Profiler;
-    set: CounterSet;
-    lastValue: any;
-    avg: any;
-    sum: any;
-    count: number;
-    options: CounterOptions;
+    private _name: string;
+    private _profiler: Profiler;
+    private _set: CounterSet;
+    private _lastValue: any;
+    private _avg: any;
+    private _sum: any;
+    private _count: number;
+    private _options: CounterOptions;
 
-    constructor(public name: string, options?: CounterOptions) {
-        this.options = options || {};
-        this.count = 0;
+    constructor(name: string, options?: CounterOptions) {
+        this._name = name;
+        this._options = options || {};
+        this._count = 0;
     }
 
     patch(): Counter[] {
@@ -25,7 +27,7 @@ export class Counter {
     }
 
     public create(): Counter {
-        return new Counter(this.name, this.options);
+        return new Counter(this._name, this._options);
     }
 
     profile(obj: any, methodName: string) {
@@ -60,99 +62,123 @@ export class Counter {
     }
 
     private isProto() {
-        return this.set == null;
+        return this._set == null;
     }
 
     update(value: any, inc: boolean = true) {
-        if (!this.profiler) {
+        if (!this._profiler) {
             return;
         }
 
         if (this.isProto()) {
-            this.profiler.updateCounter(this, value, inc);
+            this._profiler.updateCounter(this, value, inc);
             return;
         }
 
-        if (!this.options.noLastValue) {
-            this.lastValue = value;
+        if (!this._options.noLastValue) {
+            this._lastValue = value;
         }
 
-        if (!this.options.noAvg) {
-            if (this.sum == undefined) {
-                this.sum = value;
+        if (!this._options.noAvg) {
+            if (this._sum == undefined) {
+                this._sum = value;
             }
             else {
-                this.sum += value;
+                this._sum += value;
             }
         }
 
         if (inc) {
-            ++this.count;
+            ++this._count;
         }
 
-        if (!this.options.noAvg) {
-            this.avg = this.sum / this.count;
+        if (!this._options.noAvg) {
+            this._avg = this._sum / this._count;
         }
 
         this.onUpdated();
     }
 
     inc() {
-        if (!this.profiler) {
+        if (!this._profiler) {
             return;
         }
 
         if (this.isProto()) {
-            this.profiler.incCounter(this);
+            this._profiler.incCounter(this);
             return;
         }
 
-        this.count++;
+        this._count++;
 
         this.onUpdated();
     }
 
     dec() {
-        if (!this.profiler) {
+        if (!this._profiler) {
             return;
         }
 
         if (this.isProto()) {
-            this.profiler.decCounter(this);
+            this._profiler.decCounter(this);
             return;
         }
 
-        this.count--;
+        this._count--;
 
         this.onUpdated();
     }
 
     private onUpdated() {
-        if (this.set) {
-            this.set.profiler._onCounterUpdated(this);
+        if (this._set) {
+            this._set.profiler._onCounterUpdated(this);
         }
     }
 
     onRegistered(profiler: Profiler) {
-        this.profiler = profiler;
+        this._profiler = profiler;
     }
 
     onCreate(set: CounterSet) {
-        this.profiler = set.profiler;
-        this.set = set;
+        this._profiler = set.profiler;
+        this._set = set;
     }
 
     reset() {
         if (this.isProto()) {
-            this.profiler.resetCounter(this);
+            this._profiler.resetCounter(this);
             return;
         }
 
-        this.count = 0;
-        this.lastValue = undefined;
-        this.avg = undefined;
-        this.sum = undefined;
+        this._count = 0;
+        this._lastValue = undefined;
+        this._avg = undefined;
+        this._sum = undefined;
 
         this.onUpdated();
+    }
+
+    get count() {
+        return this._count;
+    }
+
+    get avg() {
+        return this._avg;
+    }
+
+    get lastValue() {
+        return this._lastValue;
+    }
+
+    get sum() {
+        return this._sum;
+    }
+
+    get set() {
+        return this._set;
+    }
+
+    get name() {
+        return this._name;
     }
 }

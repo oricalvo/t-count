@@ -3,6 +3,7 @@ import {CountersViewer} from "./counters";
 import {View} from "../util/view";
 import "./viewer.scss";
 import template from "./viewer.html";
+import {getElement} from "../util/domHelpers";
 
 export class ProfilerViewer extends View {
     private profiler: Profiler;
@@ -16,13 +17,25 @@ export class ProfilerViewer extends View {
     private activeChildName: string|null;
     private activeButton: Element;
 
-    constructor(profiler: Profiler, element: HTMLElement) {
+    private constructor(element: HTMLElement) {
         super(element, <any>template);
+    }
 
+    static fromElement(element: HTMLElement) {
+        return new ProfilerViewer(element);
+    }
+
+    static fromSelector(selector: string) {
+        return new ProfilerViewer(getElement(document, selector));
+    }
+
+    bind(profiler: Profiler) {
         this.profiler = profiler;
 
         this.initShortcut();
         this.initSettingsFromLocalStorage();
+
+        this.render();
     }
 
     render() {

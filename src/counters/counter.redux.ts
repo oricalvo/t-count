@@ -1,6 +1,6 @@
 import {Counter} from "../core/counter";
 
-export class ReduxCounter extends Counter {
+export class CounterRedux extends Counter {
     counterThunk = new Counter("Thunk");
     counterAction = new Counter("Reducer");
     middleware;
@@ -43,7 +43,7 @@ export class ReduxCounter extends Counter {
                 return retVal;
             }
 
-            return me.counterThunk.profiler.run(exec);
+            return me.counterThunk._profiler.run(exec);
         }
 
         return perfCounterMiddleware;

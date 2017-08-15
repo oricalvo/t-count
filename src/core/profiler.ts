@@ -48,7 +48,7 @@ export class Profiler {
         }
     }
 
-    patch(counters: {[name: string]: Counter}) {
+    init(counters: {[name: string]: Counter}) {
         for (let name in counters) {
             const counter = counters[name];
             const resolved = counter.patch();
