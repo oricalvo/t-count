@@ -8,10 +8,6 @@ import {getElement} from "../util/domHelpers";
 export class ProfilerViewer extends View {
     private profiler: Profiler;
     private toolbar: HTMLElement;
-    private countersAll: CountersViewer;
-    private buttonAll: HTMLElement;
-    private countersLast: CountersViewer;
-    private buttonLast: HTMLElement;
     private visible: boolean;
     private activeChild: View;
     private activeChildName: string|null;
@@ -41,19 +37,10 @@ export class ProfilerViewer extends View {
     render() {
         super.render();
 
-        this.toolbar = this.getChildElement(".toolbar");
+        this.renderToolbar();
 
-        this.countersAll = new CountersViewer(this.profiler, this.getChildElement("profiler-counters.all"));
-        this.countersAll.bind(this.profiler.all);
-        this.buttonAll = this.getChildElement("button.all");
-        this.buttonAll.addEventListener("click", this.activateChild.bind(this, this.countersAll, this.buttonAll));
-
-        this.countersLast = new CountersViewer(this.profiler, this.getChildElement("profiler-counters.last"));
-        this.countersLast.bind(this.profiler.last);
-        this.buttonLast = this.getChildElement("button.last");
-        this.buttonLast.addEventListener("click", this.activateChild.bind(this, this.countersLast, this.buttonLast));
-
-        this.renderFooter();
+        const activeButton = getElement(this.element, "button[data-name=" + this.activeChildName + "]");
+        this.activateChild(activeButton)
 
         if (this.activeChildName=="all") {
             this.activateChild(this.countersAll, this.buttonAll);
@@ -106,18 +93,6 @@ export class ProfilerViewer extends View {
         localStorage.setItem("angularProfiler.activeSet", (child==this.countersAll ? "all" : "last"));
     }
 
-    // private activateSet(counterSet: CounterSet) {
-    //     this.activeSet = counterSet;
-    //     this.render();
-    //
-    //     const button = this.buttons.find(b => b["counterSet"] == this.activeSet);
-    //     if (button) {
-    //         this.switchButton(button);
-    //     }
-    //
-    //     localStorage.setItem("angularProfiler.activeSet", this.activeSet.name);
-    // }
-
     private switchButton(button: HTMLElement) {
         if (this.activeButton) {
             this.activeButton.classList.remove("active");
@@ -125,17 +100,6 @@ export class ProfilerViewer extends View {
 
         this.activeButton = button;
         this.activeButton.classList.add("active");
-    }
-
-    // private reset() {
-    //     if (this.activeSet) {
-    //         this.activeSet.reset();
-    //     }
-    // }
-
-    private renderFooter() {
-        // const buttonReset = getElement(this.element, ".footer button.reset");
-        // buttonReset.addEventListener("click", this.reset.bind(this));
     }
 
     private initShortcut() {
@@ -151,6 +115,33 @@ export class ProfilerViewer extends View {
         this.updateVisibility();
 
         this.activeChildName = localStorage.getItem("angularProfiler.activeSet");
+    }
+
+    private renderToolbar() {
+        this.toolbar = this.getChildElement(".toolbar");
+
+        const countersAll = new CountersViewer(this.profiler, this.getChildElement("profiler-counters.all"));
+        countersAll.bind(this.profiler.all);
+
+        const countersLast = new CountersViewer(this.profiler, this.getChildElement("profiler-counters.last"));
+        countersLast.bind(this.profiler.last);
+
+        const buttonAll = this.getChildElement("button.all");
+        buttonAll.addEventListener("click", this.onButtonClicked.bind(this));
+        (<any>buttonAll)["view"] = countersAll;
+
+        const buttonLast = this.getChildElement("button.last");
+        buttonLast.addEventListener("click", this.onButtonClicked.bind(this));
+        (<any>buttonLast)["view"] = countersLast;
+    }
+
+    private onButtonClicked(event: Event) {
+        const button: HTMLElement = <HTMLElement>event.target;
+
+        const view: View = (<any>button)["view"];
+        if(view) {
+            this.activateChild(view, button);
+        }
     }
 }
 

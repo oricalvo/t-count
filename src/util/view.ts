@@ -5,6 +5,8 @@ export class View {
 
     constructor(element: HTMLElement, private template: string) {
         this._element = element;
+
+        (<any>this._element)["view"] = this;
     }
 
     get element() {
@@ -25,5 +27,14 @@ export class View {
 
     show() {
         this.element.classList.remove("hide");
+    }
+
+    static fromElement(element: HTMLElement): View {
+        const view: View = (<any>element)["view"];
+        if(!view) {
+            throw new Error("The specified element has no attached View");
+        }
+
+        return view;
     }
 }
