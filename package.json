@@ -1,9 +1,9 @@
 {
   "name": "t-count",
-  "version": "1.0.5",
+  "version": "1.0.8",
   "description": "",
-  "main": "moovit-profiler.umd.js",
-  "module": "moovit-profiler.es5.js",
+  "main": "t-count.umd.js",
+  "module": "t-count.es5.js",
   "typings": "index.d.ts",
   "scripts": {
     "pack": "bu pack",

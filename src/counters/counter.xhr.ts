@@ -34,7 +34,7 @@ export class CounterXHR extends Counter {
                 const before = (<any>xhr)["profiler_send"];
                 if (before) {
                     const after = performance.now();
-                    me.update(after - before, false);
+                    me.update(after - before, true);
                 }
             }
         }

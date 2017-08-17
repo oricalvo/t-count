@@ -1,10 +1,11 @@
-import {Profiler, CounterXHR, ProfilerViewer, CounterSetTimeout} from "t-count";
-import {CounterChangeDetection} from "t-count-angular";
+import {Profiler, ProfilerViewer, CounterSetTimeout} from "t-count";
+import {CounterChangeDetection, CounterHttp, CounterXHR} from "t-count-angular";
 
 export const counters = {
   xhr: new CounterXHR(),
-  setTimeout: new CounterSetTimeout(),
-  changeDetection: new CounterChangeDetection(),
+  //setTimeout: new CounterSetTimeout(),
+  //changeDetection: new CounterChangeDetection(),
+  //http: new CounterHttp(),
 };
 
 export const profiler = new Profiler();

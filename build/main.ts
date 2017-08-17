@@ -8,7 +8,7 @@ import * as rollup from "rollup";
 import rollupConfig from "./rollup.config";
 import * as colors from "colors/safe";
 
-const MODULE_NAME = "moovit-profiler";
+const MODULE_NAME = "t-count";
 
 cli.command("pack", pack);
 cli.command("patch", patch);
@@ -17,10 +17,6 @@ cli.run();
 
 export async function patch() {
     await pack();
-
-    let npmrc = await readFile(".npmrc", "utf8");
-    npmrc = npmrc.replace("npm-virtual", "npm-local");
-    await writeFile("./package/.npmrc", npmrc, "utf8");
 
     await exec("npm version patch", {
         cwd: "./package",
