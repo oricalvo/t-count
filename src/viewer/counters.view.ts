@@ -3,8 +3,8 @@ import {Profiler} from "../core/profiler";
 import {Counter} from "../core/counter";
 import {View} from "../util/view";
 import {getElement} from "../util/domHelpers";
-import "./counters.scss";
-import template from "./counters.html";
+import "./counters.view.scss";
+import template from "./counters.view.html";
 
 export class CountersViewer extends View {
     ul: HTMLElement;

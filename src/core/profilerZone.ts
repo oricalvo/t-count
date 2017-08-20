@@ -1,6 +1,6 @@
-import {Logger} from "complog";
+import {appLogger} from "./logger";
 
-const logger = Logger.create("ProfilerZone");
+const logger = appLogger.create("ProfilerZone");
 
 export class ProfilerZone {
     private inner: Zone;
@@ -36,12 +36,12 @@ export class ProfilerZone {
             onInvokeTask: (delegate: ZoneDelegate, current: Zone, target: Zone, task: Task, applyThis: any, applyArgs: any): any => {
                 me.onEnter();
 
+                if(task.type == "eventTask") {
+                    this.onEvent(task);
+                }
+
                 try {
                     delegate.invokeTask(target, task, applyThis, applyArgs);
-
-                    if(task.type == "eventTask") {
-                        this.onEvent(task);
-                    }
                 } finally {
                     me.onLeave();
                 }

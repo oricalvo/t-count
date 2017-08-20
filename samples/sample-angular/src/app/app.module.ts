@@ -3,10 +3,12 @@ import {ApplicationRef, NgModule, NgZone} from '@angular/core';
 import {AppComponent} from './app.component';
 import {counters} from "../profiling";
 import {Http, HttpModule} from "@angular/http";
+import { ClockComponent } from './clock/clock.component';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    ClockComponent
   ],
   imports: [
     BrowserModule,
@@ -17,17 +19,8 @@ import {Http, HttpModule} from "@angular/http";
 })
 export class AppModule {
   constructor(applicationRef: ApplicationRef, http: Http, ngZone: NgZone) {
-    //counters.changeDetection.patchAngular(applicationRef, ngZone);
-    //counters.http.patchAngular(http, ngZone);
-    counters.xhr.init(ngZone);
-
-    let counter = 0;
-
-    const tick = applicationRef.tick
-    applicationRef.tick = function() {
-      console.log(++counter);
-
-      return tick.apply(this, arguments);
-    }
+    counters.changeDetection.init(applicationRef, <any>ngZone);
+    counters.http.init(<any>http, <any>ngZone);
+    counters.xhr.init(<any>ngZone);
   }
 }

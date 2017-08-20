@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import {Http} from "@angular/http";
 import "rxjs/add/operator/map";
+import "rxjs/add/operator/toPromise";
 
 @Component({
   selector: 'app-root',
@@ -9,16 +10,22 @@ import "rxjs/add/operator/map";
 })
 export class AppComponent {
   title = 'app';
+  showClock: boolean;
 
   constructor(private http: Http) {
+    this.showClock = true;
   }
 
   noop() {
   }
 
-  runHttp() {
-    this.http.get("assets/contacts.json").subscribe(contacts => {
-      console.log(contacts);
-    });
+  async runHttp() {
+    await this.http.get("assets/contacts.json").toPromise();
+
+    setTimeout(() => {
+      console.log("timeout");
+
+      this.showClock = !this.showClock;
+    }, 1000);
   }
 }

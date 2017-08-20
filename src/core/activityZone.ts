@@ -1,8 +1,8 @@
 import {Activity} from "./activity";
 import {Profiler} from "./profiler";
-import {Logger} from "complog";
+import {appLogger} from "./logger";
 
-const logger = Logger.create("ActivityZone");
+const logger = appLogger.create("ActivityZone");
 
 export class ActivityZone {
     profiler: Profiler;

@@ -4,14 +4,14 @@ import {ProfilerZone} from "./profilerZone";
 import {Activity} from "./activity";
 import {ActivityZone} from "./activityZone";
 import {VmTurn} from "./vmTurn";
-import {Logger} from "complog";
 import {EventEmitter} from "../util/eventEmitter";
+import {appLogger} from "./logger";
 
 if (typeof Zone == 'undefined') {
     throw new Error('angular-profiler requires Zone.js prolyfill.');
 }
 
-const logger = Logger.create("Profiler");
+const logger = appLogger.create("Profiler");
 
 export class Profiler {
     private _profilerZone: ProfilerZone;
@@ -86,7 +86,7 @@ export class Profiler {
     }
 
     private onEnterVmTurn() {
-        //logger.log("ENTER VmTurn");
+        logger("ENTER VmTurn").log();
 
         this._vmTurn = new VmTurn(this.createSet("vmTurn"));
 
@@ -101,7 +101,7 @@ export class Profiler {
     }
 
     private onLeaveVmTurn() {
-        //logger.log("LEAVE VmTurn");
+        logger("LEAVE VmTurn").log();
 
         this._vmTurn = null;
         // if (this._activity) {
@@ -110,6 +110,8 @@ export class Profiler {
     }
 
     private onEvent(task: Task) {
+        logger("EVENT", task).log();
+
         if(task.source.indexOf("addEventListener:click")!=-1) {
             this._counterSetLast.reset();
 
@@ -118,19 +120,19 @@ export class Profiler {
     }
 
     private onStartActivity(activity: Activity) {
-        logger.log("START Activity");
+        logger("START Activity").log();
     }
 
     private onFinishActivity(activity: Activity) {
-        logger.log("FINISH Activity");
+        logger("FINISH Activity").log();
     }
 
     private onEnterActivity(activity: Activity) {
-        logger.log("ENTER Activity");
+        logger("ENTER Activity").log();
     }
 
     private onLeaveActivity(activity: Activity) {
-        logger.log("LEAVE Activity");
+        logger("LEAVE Activity").log();
     }
 
     setData(name: string, value: any) {

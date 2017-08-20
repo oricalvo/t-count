@@ -1,5 +1,7 @@
 <h1>t-count Angular Sample</h1>
 
+<app-clock *ngIf="showClock"></app-clock>
+
 <div>
   <button (click)="noop()">Noop</button>
   <button (click)="runHttp()">Http</button>

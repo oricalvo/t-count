@@ -1,6 +1,6 @@
 {
   "name": "t-count",
-  "version": "1.0.8",
+  "version": "1.0.13",
   "description": "",
   "main": "t-count.umd.js",
   "module": "t-count.es5.js",
@@ -12,7 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "complog": "^1.0.9",
+    "complog": "^2.0.3",
     "tslib": "^1.7.0",
     "zone.js": "^0.8.10"
   },

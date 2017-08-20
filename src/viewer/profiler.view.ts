@@ -1,8 +1,8 @@
 import {Profiler} from "../core/profiler";
-import {CountersViewer} from "./counters";
+import {CountersViewer} from "./counters.view";
 import {View} from "../util/view";
-import "./viewer.scss";
-import template from "./viewer.html";
+import "./profiler.view.scss";
+import template from "./profiler.view.html";
 import {getElement} from "../util/domHelpers";
 
 export class ProfilerViewer extends View {
@@ -10,7 +10,6 @@ export class ProfilerViewer extends View {
     private toolbar: HTMLElement;
     private visible: boolean;
     private activeChild: View;
-    private activeChildName: string|null;
     private activeButton: Element;
 
     private constructor(element: HTMLElement) {
@@ -29,7 +28,6 @@ export class ProfilerViewer extends View {
         this.profiler = profiler;
 
         this.initShortcut();
-        this.initSettingsFromLocalStorage();
 
         this.render();
     }
@@ -39,18 +37,21 @@ export class ProfilerViewer extends View {
 
         this.renderToolbar();
 
-        const activeButton = getElement(this.element, "button[data-name=" + this.activeChildName + "]");
-        this.activateChild(activeButton)
+        this.visible = localStorage.getItem("angularProfiler.visible") == "true";
+        this.updateVisibility();
 
-        if (this.activeChildName=="all") {
-            this.activateChild(this.countersAll, this.buttonAll);
+        const activeChildName = localStorage.getItem("angularProfiler.activeSet");
+        const activeButton = getElement(this.element, "button[data-name=" + activeChildName + "]");
+        this.activateChild(activeButton, false);
+    }
+
+    private getAttachedView(element: any) {
+        const view = element["view"];
+        if(!view) {
+            throw new Error("No attached view");
         }
-        else if(this.activeChildName=="last"){
-            this.activateChild(this.countersLast, this.buttonLast);
-        }
-        else {
-            this.activateChild(this.countersAll, this.buttonAll);
-        }
+
+        return view;
     }
 
     private toggleVisibility() {
@@ -70,7 +71,7 @@ export class ProfilerViewer extends View {
         }
     }
 
-    private activateChild(child: View, button: HTMLElement) {
+    private activateChild(button: HTMLElement, saveToLocalStorage: boolean) {
         if(this.activeChild) {
             this.activeChild.element.classList.remove("active");
         }
@@ -79,7 +80,8 @@ export class ProfilerViewer extends View {
             this.activeButton.classList.remove("active");
         }
 
-        this.activeChild = child;
+        const view = this.getAttachedView(button);
+        this.activeChild = view;
         this.activeButton = button;
 
         if(this.activeChild) {
@@ -90,7 +92,9 @@ export class ProfilerViewer extends View {
             this.activeButton.classList.add("active");
         }
 
-        localStorage.setItem("angularProfiler.activeSet", (child==this.countersAll ? "all" : "last"));
+        if(saveToLocalStorage) {
+            localStorage.setItem("angularProfiler.activeSet", <string>button.getAttribute("data-name"));
+        }
     }
 
     private switchButton(button: HTMLElement) {
@@ -108,13 +112,6 @@ export class ProfilerViewer extends View {
                 this.toggleVisibility();
             }
         });
-    }
-
-    private initSettingsFromLocalStorage() {
-        this.visible = localStorage.getItem("angularProfiler.visible") == "true";
-        this.updateVisibility();
-
-        this.activeChildName = localStorage.getItem("angularProfiler.activeSet");
     }
 
     private renderToolbar() {
@@ -137,11 +134,7 @@ export class ProfilerViewer extends View {
 
     private onButtonClicked(event: Event) {
         const button: HTMLElement = <HTMLElement>event.target;
-
-        const view: View = (<any>button)["view"];
-        if(view) {
-            this.activateChild(view, button);
-        }
+        this.activateChild(button, true);
     }
 }
 
