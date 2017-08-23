@@ -48,9 +48,8 @@ export class Profiler {
         }
     }
 
-    init(counters: {[name: string]: Counter}) {
-        for (let name in counters) {
-            const counter = counters[name];
+    init(counters: Counter[]) {
+        for (let counter of counters) {
             const resolved = counter.patch();
 
             for(let c of resolved) {
@@ -89,24 +88,12 @@ export class Profiler {
         logger("ENTER VmTurn").log();
 
         this._vmTurn = new VmTurn(this.createSet("vmTurn"));
-
-        // let activity: Activity = Zone.current.get("profilerActivity");
-        // if (activity) {
-        //     this._activity = activity;
-        //     return;
-        // }
-        //
-        // this._counterSetLast.reset();
-        // this._activity = new Activity(this._counterSetLast);
     }
 
     private onLeaveVmTurn() {
         logger("LEAVE VmTurn").log();
 
         this._vmTurn = null;
-        // if (this._activity) {
-        //     this._activity = null;
-        // }
     }
 
     private onEvent(task: Task) {
@@ -204,4 +191,27 @@ export class Profiler {
     createActivity() {
         return new Activity(this.createSet("activity"))
     }
+
+    static create(types: Type<Counter>[]) {
+        const profiler = new Profiler();
+
+        const counters = types.map(type => new type());
+        profiler.init(counters);
+
+        return profiler;
+    }
+
+    get<T>(type: Type<T>): T {
+        for(let counter of this._counters) {
+            if(counter instanceof type) {
+                return <any>counter;
+            }
+        }
+
+        throw new Error("Counter of type " + type.name + " was not found");
+    }
+}
+
+export interface Type<T> extends Function {
+    new (...args: any[]): T;
 }

@@ -16,12 +16,21 @@ export class ProfilerViewer extends View {
         super(element, <any>template);
     }
 
-    static fromElement(element: HTMLElement) {
-        return new ProfilerViewer(element);
-    }
+    static create(profiler: Profiler, selector: string): ProfilerViewer;
+    static create(profiler: Profiler, element: HTMLElement): ProfilerViewer;
+    static create(profiler: Profiler, selectorOrElement: string|HTMLElement): ProfilerViewer {
+        let viewer;
 
-    static fromSelector(selector: string) {
-        return new ProfilerViewer(getElement(document, selector));
+        if(typeof selectorOrElement == "string") {
+            viewer = new ProfilerViewer(getElement(document, selectorOrElement));
+        }
+        else {
+            viewer = new ProfilerViewer(selectorOrElement);
+        }
+
+        viewer.bind(profiler);
+
+        return viewer;
     }
 
     bind(profiler: Profiler) {
