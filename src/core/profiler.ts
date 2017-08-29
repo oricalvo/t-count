@@ -7,10 +7,6 @@ import {VmTurn} from "./vmTurn";
 import {EventEmitter} from "../util/eventEmitter";
 import {appLogger} from "./logger";
 
-if (typeof Zone == 'undefined') {
-    throw new Error('angular-profiler requires Zone.js prolyfill.');
-}
-
 const logger = appLogger.create("Profiler");
 
 export class Profiler {
@@ -31,11 +27,6 @@ export class Profiler {
         this._counters = [];
         this._data = {};
         this._activity = null;
-
-        this._profilerZone = new ProfilerZone();
-        this._profilerZone.onEnter = this.onEnterVmTurn.bind(this);
-        this._profilerZone.onLeave = this.onLeaveVmTurn.bind(this);
-        this._profilerZone.onEvent = this.onEvent.bind(this);
 
         this._activityZone = new ActivityZone(this);
         this._activityZone.onStart = this.onStartActivity.bind(this);
@@ -65,11 +56,28 @@ export class Profiler {
     }
 
     run<T>(fn: () => T): T {
+        this.ensureZoneJSLoaded();
+
+        if(!this._profilerZone) {
+            this._profilerZone = new ProfilerZone();
+            this._profilerZone.onEnter = this.onEnterVmTurn.bind(this);
+            this._profilerZone.onLeave = this.onLeaveVmTurn.bind(this);
+            this._profilerZone.onEvent = this.onEvent.bind(this);
+        }
+
         return this._profilerZone.run(fn);
     }
 
     activity<T>(fn: ()=>T): T {
+        this.ensureZoneJSLoaded();
+
         return this._activityZone.run(fn, this.createActivity.bind(this));
+    }
+
+    private ensureZoneJSLoaded() {
+        if (typeof Zone == 'undefined') {
+            throw new Error('angular-profiler requires Zone.js prolyfill.');
+        }
     }
 
     get sets(): CounterSet[] {

@@ -1,6 +1,6 @@
 {
   "name": "t-count",
-  "version": "1.0.22",
+  "version": "1.0.31",
   "description": "",
   "main": "t-count.umd.js",
   "module": "t-count.es5.js",

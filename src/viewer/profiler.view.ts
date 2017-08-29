@@ -3,7 +3,7 @@ import {CountersViewer} from "./counters.view";
 import {View} from "../util/view";
 import "./profiler.view.scss";
 import template from "./profiler.view.html";
-import {getElement} from "../util/domHelpers";
+import {getElement, removeElement} from "../util/domHelpers";
 
 export class ProfilerViewer extends View {
     private profiler: Profiler;
@@ -11,21 +11,28 @@ export class ProfilerViewer extends View {
     private visible: boolean;
     private activeChild: View;
     private activeButton: Element;
+    private shortcutKey: string;
+    private showLast: boolean;
 
-    private constructor(element: HTMLElement) {
+    private constructor(element: HTMLElement, shortcutKey: string, showLast: boolean) {
         super(element, <any>template);
+
+        this.shortcutKey = shortcutKey;
+        this.showLast = showLast;
     }
 
     static create(profiler: Profiler, selector: string): ProfilerViewer;
+    static create(profiler: Profiler, selector: string, shortcutKey: string, showLast: boolean): ProfilerViewer;
     static create(profiler: Profiler, element: HTMLElement): ProfilerViewer;
-    static create(profiler: Profiler, selectorOrElement: string|HTMLElement): ProfilerViewer {
+    static create(profiler: Profiler, element: HTMLElement, shortcutKey: string, showLast: boolean): ProfilerViewer;
+    static create(profiler: Profiler, selectorOrElement: string|HTMLElement, shortcutKey: string = "KeyH", showLast: boolean = true): ProfilerViewer {
         let viewer;
 
         if(typeof selectorOrElement == "string") {
-            viewer = new ProfilerViewer(getElement(document, selectorOrElement));
+            viewer = new ProfilerViewer(getElement(document, selectorOrElement), shortcutKey, showLast);
         }
         else {
-            viewer = new ProfilerViewer(selectorOrElement);
+            viewer = new ProfilerViewer(selectorOrElement, shortcutKey, showLast);
         }
 
         viewer.bind(profiler);
@@ -54,6 +61,12 @@ export class ProfilerViewer extends View {
             const activeButton = getElement(this.element, "button[data-name=" + activeChildName + "]");
             this.activateChild(activeButton, false);
         }
+    }
+
+    show() {
+        this.visible = true;
+
+        this.updateVisibility();
     }
 
     private getAttachedView(element: any) {
@@ -119,7 +132,7 @@ export class ProfilerViewer extends View {
 
     private initShortcut() {
         document.addEventListener("keydown", (e) => {
-            if (e.code == "KeyH" && e.shiftKey && e.ctrlKey) {
+            if (e.code == this.shortcutKey && e.shiftKey && e.altKey) {
                 this.toggleVisibility();
             }
         });
@@ -131,16 +144,20 @@ export class ProfilerViewer extends View {
         const countersAll = new CountersViewer(this.profiler, this.getChildElement("profiler-counters.all"));
         countersAll.bind(this.profiler.all);
 
-        const countersLast = new CountersViewer(this.profiler, this.getChildElement("profiler-counters.last"));
-        countersLast.bind(this.profiler.last);
-
         const buttonAll = this.getChildElement("button.all");
         buttonAll.addEventListener("click", this.onButtonClicked.bind(this));
         (<any>buttonAll)["view"] = countersAll;
 
         const buttonLast = this.getChildElement("button.last");
-        buttonLast.addEventListener("click", this.onButtonClicked.bind(this));
-        (<any>buttonLast)["view"] = countersLast;
+        if(this.showLast) {
+            const countersLast = new CountersViewer(this.profiler, this.getChildElement("profiler-counters.last"));
+            countersLast.bind(this.profiler.last);
+            buttonLast.addEventListener("click", this.onButtonClicked.bind(this));
+            (<any>buttonLast)["view"] = countersLast;
+        }
+        else {
+            removeElement(buttonLast);
+        }
     }
 
     private onButtonClicked(event: Event) {

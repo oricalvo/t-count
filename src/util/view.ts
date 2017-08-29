@@ -17,7 +17,7 @@ export class View {
         this.element.innerHTML = this.template;
     }
 
-    getChildElement(selector: string) {
+    getChildElement(selector: string): HTMLElement  {
         return getElement(this.element, selector);
     }
 
