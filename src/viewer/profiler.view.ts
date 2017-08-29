@@ -50,8 +50,10 @@ export class ProfilerViewer extends View {
         this.updateVisibility();
 
         const activeChildName = localStorage.getItem("angularProfiler.activeSet");
-        const activeButton = getElement(this.element, "button[data-name=" + activeChildName + "]");
-        this.activateChild(activeButton, false);
+        if(activeChildName) {
+            const activeButton = getElement(this.element, "button[data-name=" + activeChildName + "]");
+            this.activateChild(activeButton, false);
+        }
     }
 
     private getAttachedView(element: any) {
